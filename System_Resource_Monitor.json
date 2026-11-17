@@ -1,0 +1,205 @@
+{
+  "name": "System_Resource_Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -224,
+        16
+      ],
+      "id": "4f63221f-262e-43b9-987e-3d21eb238a0e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:5678/metrics",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -32,
+        16
+      ],
+      "id": "21612c2a-b3c4-4d35-b185-e05a258ab089",
+      "name": "Get_Server_Metrics"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1b7d5f0e-467d-4f4f-ac1b-df793620371e",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        192,
+        16
+      ],
+      "id": "69f23e55-bb43-41c2-a032-637b0b7ffb44",
+      "name": "Check_Server_Status"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0CCRSB9WAX",
+          "mode": "id"
+        },
+        "text": "= ⚠️ n8n SERVER MONITORING ALERT ⚠️  The server metrics endpoint returned an unexpected response.  HTTP Status: {{ $json.statusCode }} Status Message: {{ $json.statusMessage }}  Expected Status: 200 OK  Action Required: Check whether the metrics endpoint is enabled and accessible.  Automated by System_Resource_Monitor.",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        -128
+      ],
+      "id": "96e890b2-7cd4-4ac3-ab92-58ebabf8b81c",
+      "name": "Send_Server_Alert",
+      "webhookId": "73c5085e-9945-42fd-b1d3-eb0a61a3facb",
+      "credentials": {
+        "slackApi": {
+          "id": "wk96ba8pCWz2TXvb",
+          "name": "Slack account 10"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "61db78ed-c6c2-4cae-9a4b-5cdd639f0e6e",
+              "name": "server_status",
+              "value": "Healthy",
+              "type": "string"
+            },
+            {
+              "id": "0fce57eb-e1a2-4831-88af-2d4faa623d50",
+              "name": "http_status",
+              "value": "={{ $json.statusCode }}",
+              "type": "number"
+            },
+            {
+              "id": "52798aae-4f8e-4cdb-a619-5e004c23d46e",
+              "name": "message",
+              "value": "Server metrics endpoint responded successfully",
+              "type": "string"
+            },
+            {
+              "id": "335233ce-4d02-41b9-a29d-fabebeffdbe4",
+              "name": "checked_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        480,
+        144
+      ],
+      "id": "9a40652f-5a87-4f39-ac74-a16c12851446",
+      "name": "Log_Healthy_Status"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get_Server_Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_Server_Metrics": {
+      "main": [
+        [
+          {
+            "node": "Check_Server_Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check_Server_Status": {
+      "main": [
+        [
+          {
+            "node": "Send_Server_Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log_Healthy_Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "a95e68a3-1032-4684-bff8-0ae59c4cc496",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a03c7678428ef19ededbf912f16f7d5798ec7b9ab4c17f2a2def6a9e791e7215"
+  },
+  "nodeGroups": [],
+  "id": "pGymHhVtvCPkr9n6",
+  "tags": []
+}
